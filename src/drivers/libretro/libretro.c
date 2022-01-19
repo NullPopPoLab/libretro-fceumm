@@ -337,6 +337,43 @@ void FCEUD_DispMessage(enum retro_log_level level, unsigned duration, const char
    }
 }
 
+static bool disk_set_eject_state( bool ejected )
+{
+	FCEU_FDSInsert(-1);
+	return true;
+}
+
+static bool disk_get_eject_state(void)
+{
+	return FCEU_Ready();
+}
+
+static bool disk_set_image_index(unsigned index)
+{
+	return FCEU_SelectSide(index);
+}
+
+unsigned disk_get_image_index(void)
+{
+	return FCEU_SelectedSide();
+}
+
+static unsigned disk_get_num_images(void)
+{
+	return FCEU_TotalSides();
+}
+
+static struct retro_disk_control_callback disk_interface =
+{
+	disk_set_eject_state,
+	disk_get_eject_state,
+	disk_get_image_index,
+	disk_set_image_index,
+	disk_get_num_images,
+	0,
+	0,
+};
+
 void FCEUD_SoundToggle (void)
 {
    FCEUI_SetSoundVolume(sndvolume);
@@ -1404,6 +1441,8 @@ void retro_init(void)
 
    environ_cb(RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION,
          &libretro_msg_interface_version);
+
+   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &disk_interface);
 
    palette_switch_init();
 }
@@ -3201,40 +3240,3 @@ size_t retro_get_memory_size(unsigned type)
 
    return size;
 }
-
-static bool disk_set_eject_state( bool ejected )
-{
-	FCEU_FDSInsert(-1);
-	return true;
-}
-
-static bool disk_get_eject_state(void)
-{
-	return FCEU_Ready();
-}
-
-static bool disk_set_image_index(unsigned index)
-{
-	return FCEU_SelectSide(index);
-}
-
-unsigned disk_get_image_index(void)
-{
-	return FCEU_SelectedSide();
-}
-
-static unsigned disk_get_num_images(void)
-{
-	return FCEU_TotalSides();
-}
-
-static struct retro_disk_control_callback disk_interface =
-{
-	disk_set_eject_state,
-	disk_get_eject_state,
-	disk_get_image_index,
-	disk_set_image_index,
-	disk_get_num_images,
-	0,
-	0,
-};
