@@ -3220,7 +3220,7 @@ static bool disk_set_image_index(unsigned index)
 
 unsigned disk_get_image_index(void)
 {
-	return FCEU_SelectedSide()
+	return FCEU_SelectedSide();
 }
 
 static unsigned disk_get_num_images(void)
