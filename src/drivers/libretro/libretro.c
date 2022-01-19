@@ -2158,6 +2158,7 @@ static void FCEUD_UpdateInput(void)
    if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
       FCEU_VSUniCoin();             /* Insert Coin VS System */
 
+#if 0
    if (GameInfo->type == GIT_FDS)   /* Famicom Disk System */
    {
       bool curL = input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L);
@@ -2172,6 +2173,7 @@ static void FCEUD_UpdateInput(void)
          FCEU_FDSInsert(-1);        /* Insert or eject the disk */
       prevR = curR;
    }
+#endif
 
    /* Handle internal palette switching */
    if (palette_prev || palette_next)
@@ -2783,8 +2785,8 @@ bool retro_load_game(const struct retro_game_info *info)
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "(VSSystem) Insert Coin" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },
+/*      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },*/
+/*      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },*/
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
@@ -2843,8 +2845,8 @@ bool retro_load_game(const struct retro_game_info *info)
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "Switch Palette (+ Left/Right)" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "(VSSystem) Insert Coin" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },
+/*      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },*/
+/*      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },*/
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
@@ -3199,3 +3201,40 @@ size_t retro_get_memory_size(unsigned type)
 
    return size;
 }
+
+static bool disk_set_eject_state( bool ejected )
+{
+	FCEU_FDSInsert(-1);
+	return true;
+}
+
+static bool disk_get_eject_state(void)
+{
+	return FCEU_Ready();
+}
+
+static bool disk_set_image_index(unsigned index)
+{
+	return FCEU_SelectSide(index);
+}
+
+unsigned disk_get_image_index(void)
+{
+	return FCEU_SelectedSide()
+}
+
+static unsigned disk_get_num_images(void)
+{
+	return FCEU_TotalSides();
+}
+
+static struct retro_disk_control_callback disk_interface =
+{
+	disk_set_eject_state,
+	disk_get_eject_state,
+	disk_get_image_index,
+	disk_set_image_index,
+	disk_get_num_images,
+	null,
+	null,
+};
