@@ -187,7 +187,7 @@ bool FCEU_SelectSide(uint8 side){
 		return false;
 	}
 	if (side >= TotalSides) {
-		FCEUD_DispMessage(RETRO_LOG_WARN, 2000, "Side over (%u/%u)",(unsigned)side,TotalSides);
+		FCEU_DispMessage(RETRO_LOG_WARN, 2000, "Side over (%u/%u)",(unsigned)side,TotalSides);
 		return false;
 	}
 	InDisk = side;
