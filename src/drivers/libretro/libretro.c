@@ -339,13 +339,13 @@ void FCEUD_DispMessage(enum retro_log_level level, unsigned duration, const char
 
 static bool disk_set_eject_state( bool ejected )
 {
-	FCEU_FDSInsert(-1);
+	if(ejected==FCEU_Ready())FCEU_FDSInsert(-1);
 	return true;
 }
 
 static bool disk_get_eject_state(void)
 {
-	return FCEU_Ready();
+	return !FCEU_Ready();
 }
 
 static bool disk_set_image_index(unsigned index)
