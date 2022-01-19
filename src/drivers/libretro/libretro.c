@@ -3235,6 +3235,6 @@ static struct retro_disk_control_callback disk_interface =
 	disk_get_image_index,
 	disk_set_image_index,
 	disk_get_num_images,
-	null,
-	null,
+	0,
+	0,
 };
