@@ -177,6 +177,23 @@ static void FDSInit(void) {
 #endif
 }
 
+bool FCEU_Ready(){return InDisk != 255;}
+uint8 FCEU_CurrentSide(){return InDisk;}
+uint8 FCEU_SelectedSide(){return SelectDisk;}
+uint32 FCEU_TotalSides(){return TotalSides;}
+bool FCEU_SelectSide(uint8 side){
+	if (InDisk != 255) {
+		FCEUD_DispMessage(RETRO_LOG_WARN, 2000, "Eject disk before selecting");
+		return false;
+	}
+	if (side >= TotalSides) {
+		FCEU_DispMessage(RETRO_LOG_WARN, 2000, "Side over (%u/%u)",(unsigned)side,TotalSides);
+		return false;
+	}
+	SelectDisk = side;
+	return true;
+}
+
 void FCEU_FDSInsert(int oride) {
 	if (InDisk == 255) {
 		FCEU_DispMessage(RETRO_LOG_INFO, 2000, "Disk %d of %d Side %s Inserted",
