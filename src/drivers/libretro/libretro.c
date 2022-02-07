@@ -363,15 +363,40 @@ static unsigned disk_get_num_images(void)
 	return FCEU_TotalSides();
 }
 
-static struct retro_disk_control_callback disk_interface =
+static unsigned disk_get_num_drives_t(void)
+{
+	return 1;
+}
+
+static bool disk_get_image_label(unsigned index, char *label, size_t len)
+{
+	if(index>=FCEU_TotalSides())return false;
+	snprintf(label,len,"Disk %u Side %c",(index>>1)+1,(index&1)?'B':'A');
+	return true;
+}
+
+static int disk_get_drive_image_index(unsigned drive)
+{
+	if(!FCEU_Ready())return -1;
+	return FCEU_CurrentSide();
+}
+
+static struct retro_disk_control_ext2_callback disk_interface =
 {
 	disk_set_eject_state,
 	disk_get_eject_state,
 	disk_get_image_index,
 	disk_set_image_index,
 	disk_get_num_images,
-	0,
-	0,
+	0, /* disk_replace_image_index */
+	0, /* add_image_index */
+	0, /* set_initial_image */
+	0, /* get_image_path */
+	disk_get_image_label,
+	disk_get_num_drives,
+	0, /* set_drive_eject_state */
+	0, /* get_drive_eject_state */
+	get_drive_image_index
 };
 
 void FCEUD_SoundToggle (void)
