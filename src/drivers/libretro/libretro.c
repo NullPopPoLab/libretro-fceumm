@@ -94,6 +94,9 @@ static bool crop_overscan_v;
 static bool use_raw_palette;
 static int aspect_ratio_par;
 
+static float left_stick_speed=0.5f;
+static float right_stick_speed=0.2f;
+
 /*
  * Flags to keep track of whether turbo
  * buttons toggled on or off.
@@ -147,7 +150,7 @@ typedef struct {
 } NES_INPUT_T;
 
 static NES_INPUT_T nes_input = { 0 };
-enum RetroZapperInputModes{RetroLightgun, RetroMouse, RetroPointer};
+enum RetroZapperInputModes{RetroLightgun, RetroMouse, RetroPointer, RetroPad};
 static enum RetroZapperInputModes zappermode = RetroLightgun;
 
 static bool libretro_supports_bitmasks = false;
@@ -1692,8 +1695,27 @@ static void check_variables(bool startup)
    {
       if (!strcmp(var.value, "mouse")) zappermode = RetroMouse;
       else if (!strcmp(var.value, "touchscreen")) zappermode = RetroPointer;
+      else if (!strcmp(var.value, "stick")) zappermode = RetroPad;
       else zappermode = RetroLightgun; /*default setting*/
    }
+
+   var.key = "fceumm_left_stick_speed";
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        left_stick_speed = (float) atof(var.value);
+    }
+    else
+        left_stick_speed = 0.5f;
+
+   var.key = "fceumm_right_stick_speed";
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        right_stick_speed = (float) atof(var.value);
+    }
+    else
+        right_stick_speed = 0.2f;
 
    var.key = "fceumm_zapper_tolerance";
 
@@ -1933,6 +1955,52 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
 
       if (input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED))
          zapdata[2] |= 0x1;
+   }
+   else if (zappermode == RetroPad) {
+		static float stick_lx=0.0f,stick_ly=0.0f,stick_rx=0.0f,stick_ry=0.0f;
+
+		int slx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+		int sly = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+		int srx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
+		int sry = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
+		float speed_l=left_stick_speed/2048.0f;
+		float speed_r=right_stick_speed/2048.0f;
+		int sx,sy;
+
+      min_width   = (adjx ? 8 : 0) + 1;
+      min_height  = (adjy ? 8 : 0) + 1;
+      max_width  -= (adjx ? 8 : 0);
+      max_height -= (adjy ? 8 : 0);
+
+		stick_lx+=speed_l*slx;
+		stick_ly+=speed_l*sly;
+		stick_rx+=speed_r*srx;
+		stick_ry+=speed_r*sry;
+		slx=stick_lx;
+		sly=stick_ly;
+		srx=stick_rx;
+		sry=stick_ry;
+		stick_lx-=slx;
+		stick_ly-=sly;
+		stick_rx-=srx;
+		stick_ry-=sry;
+		sx=slx+srx;
+		sy=sly+sry;
+
+      /* Set crosshair within the limits of current screen resolution */
+      if (sx < min_width) sx = min_width;
+      else if (sx > max_width) sx = max_width;
+
+      if (sy < min_height) sy = min_height;
+      else if (sy > max_height) sy = max_height;
+
+      zapdata[0] = sx;
+      zapdata[1] = sy;
+
+      if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+         zapdata[2] |= 0x1;
+      if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+         zapdata[2] |= 0x2;
    }
    else /* lightgun device */
    {
