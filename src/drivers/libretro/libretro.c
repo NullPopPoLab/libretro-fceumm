@@ -337,9 +337,16 @@ void FCEUD_DispMessage(enum retro_log_level level, unsigned duration, const char
    }
 }
 
+static unsigned diskidx=0;
+
 static bool disk_set_eject_state( bool ejected )
 {
-	if(ejected==FCEU_Ready())FCEU_FDSInsert(-1);
+	if(FCEU_Ready())FCEU_FDSInsert(-1);
+	if(!ejected){
+		if(!FCEU_SelectSide(diskidx))return false;
+		FCEU_FDSInsert(-1);
+	}
+
 	return true;
 }
 
@@ -350,12 +357,12 @@ static bool disk_get_eject_state(void)
 
 static bool disk_set_image_index(unsigned index)
 {
-	return FCEU_SelectSide(index);
+	diskidx=index;
 }
 
 unsigned disk_get_image_index(void)
 {
-	return FCEU_SelectedSide();
+	return diskidx;
 }
 
 static unsigned disk_get_num_images(void)
