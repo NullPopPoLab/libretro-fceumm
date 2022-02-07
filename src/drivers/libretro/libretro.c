@@ -363,7 +363,7 @@ static unsigned disk_get_num_images(void)
 	return FCEU_TotalSides();
 }
 
-static unsigned disk_get_num_drives_t(void)
+static unsigned disk_get_num_drives(void)
 {
 	return 1;
 }
