@@ -1753,6 +1753,16 @@ enum retro_mod
                                             * the frontend is attempting to call retro_run().
                                             */
 
+#define RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT2_INTERFACE (RETRO_ENVIRONMENT_EXPERIMENTAL|0x9876)
+                                           /* const struct retro_disk_control_ext2_callback * --
+                                            * Sets an interface which frontend can use to eject and insert
+                                            * disk images, and also obtain information about individual
+                                            * disk image files registered by the core.
+                                            * This is used for games which consist of multiple images and
+                                            * must be manually swapped out by the user (e.g. PSX, floppy disk
+                                            * based systems).
+                                            */
+
 /* VFS functionality */
 
 /* File paths:
@@ -2844,14 +2854,18 @@ struct retro_keyboard_callback
  * When ejected, the disk image index can be set.
  */
 typedef bool (RETRO_CALLCONV *retro_set_eject_state_t)(bool ejected);
+typedef bool (RETRO_CALLCONV *retro_set_drive_eject_state_t)(unsigned drive, bool ejected);
 
 /* Gets current eject state. The initial state is 'not ejected'. */
 typedef bool (RETRO_CALLCONV *retro_get_eject_state_t)(void);
+typedef bool (RETRO_CALLCONV *retro_get_drive_eject_state_t)(unsigned drive);
 
 /* Gets current disk index. First disk is index 0.
  * If return value is >= get_num_images(), no disk is currently inserted.
  */
 typedef unsigned (RETRO_CALLCONV *retro_get_image_index_t)(void);
+/* Gets drive inserted disk index. (-1 means ejected) */
+typedef int (RETRO_CALLCONV *retro_get_drive_image_index_t)(unsigned drive);
 
 /* Sets image index. Can only be called when disk is ejected.
  * The implementation supports setting "no disk" by using an
@@ -2861,6 +2875,9 @@ typedef bool (RETRO_CALLCONV *retro_set_image_index_t)(unsigned index);
 
 /* Gets total number of images which are available to use. */
 typedef unsigned (RETRO_CALLCONV *retro_get_num_images_t)(void);
+
+/* Gets total number of disk drives which are available to use. */
+typedef unsigned (RETRO_CALLCONV *retro_get_num_drives_t)(void);
 
 struct retro_game_info;
 
@@ -2964,6 +2981,32 @@ struct retro_disk_control_ext_callback
 
    retro_get_image_path_t get_image_path;       /* Optional - may be NULL */
    retro_get_image_label_t get_image_label;     /* Optional - may be NULL */
+};
+
+struct retro_disk_control_ext2_callback
+{
+   retro_set_eject_state_t set_eject_state;
+   retro_get_eject_state_t get_eject_state;
+
+   retro_get_image_index_t get_image_index;
+   retro_set_image_index_t set_image_index;
+   retro_get_num_images_t  get_num_images;
+
+   retro_replace_image_index_t replace_image_index;
+   retro_add_image_index_t add_image_index;
+
+   /* NOTE: Frontend will only attempt to record/restore
+    * last used disk index if both set_initial_image()
+    * and get_image_path() are implemented */
+   retro_set_initial_image_t set_initial_image; /* Optional - may be NULL */
+
+   retro_get_image_path_t get_image_path;       /* Optional - may be NULL */
+   retro_get_image_label_t get_image_label;     /* Optional - may be NULL */
+
+   retro_get_num_drives_t get_num_drives;     /* Optional - may be NULL */
+   retro_set_drive_eject_state_t set_drive_eject_state;     /* Optional - may be NULL */
+   retro_get_drive_eject_state_t get_drive_eject_state;     /* Optional - may be NULL */
+   retro_get_drive_image_index_t get_drive_image_index;     /* Optional - may be NULL */
 };
 
 enum retro_pixel_format
