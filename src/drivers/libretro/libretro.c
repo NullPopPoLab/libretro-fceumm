@@ -94,7 +94,7 @@ static bool crop_overscan_v;
 static bool use_raw_palette;
 static int aspect_ratio_par;
 
-static float left_stick_speed=0.5f;
+static float left_stick_speed=0.8f;
 static float right_stick_speed=0.2f;
 static float analog_stick_deadzone=0.1f;
 float inv_analog_stick_acceleration = 1.0f/2048.0f;
@@ -1723,10 +1723,10 @@ static void check_variables(bool startup)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        right_stick_speed = (float) atof(var.value);
+        analog_stick_deadzone = (float) atof(var.value);
     }
     else
-        right_stick_speed = 0.1f;
+        analog_stick_deadzone = 0.1f;
 
    var.key = "fceumm_zapper_tolerance";
 
