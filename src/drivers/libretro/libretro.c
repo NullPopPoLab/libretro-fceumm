@@ -996,7 +996,7 @@ static unsigned nes_to_libretro(int d)
    case SI_ZAPPER:
       return RETRO_DEVICE_ZAPPER;
    case SI_ARKANOID:
-      return RETRO_DEVICE_ARKANOID;
+      return RETRO_DEVICE_ARKANOID_MOUSE;
    }
 
    return (RETRO_DEVICE_GAMEPAD);
