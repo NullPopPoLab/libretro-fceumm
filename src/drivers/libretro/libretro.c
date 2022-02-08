@@ -1272,6 +1272,7 @@ void retro_set_environment(retro_environment_t cb)
 {
    struct retro_vfs_interface_info vfs_iface_info;
 
+#if 0
    static const struct retro_controller_description pads1[] = {
       { "Auto",    RETRO_DEVICE_AUTO },
       { "Gamepad", RETRO_DEVICE_GAMEPAD },
@@ -1317,6 +1318,7 @@ void retro_set_environment(retro_environment_t cb)
       { pads5, 6 },
       { 0, 0 },
    };
+#endif
 
    static const struct retro_system_content_info_override content_overrides[] = {
       {
@@ -1329,7 +1331,7 @@ void retro_set_environment(retro_environment_t cb)
 
    environ_cb = cb;
 
-   environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+/*   environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);*/
 
    vfs_iface_info.required_interface_version = 1;
    vfs_iface_info.iface                      = NULL;
