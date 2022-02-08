@@ -1705,7 +1705,7 @@ static void check_variables(bool startup)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        left_stick_speed = (float) atof(var.value);
+        left_stick_speed = atof(var.value);
     }
     else
         left_stick_speed = 0.8f;
@@ -1714,7 +1714,7 @@ static void check_variables(bool startup)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        right_stick_speed = (float) atof(var.value);
+        right_stick_speed = atof(var.value);
     }
     else
         right_stick_speed = 0.2f;
@@ -1723,7 +1723,7 @@ static void check_variables(bool startup)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        analog_stick_deadzone = (float) atof(var.value);
+        analog_stick_deadzone = atof(var.value);
     }
     else
         analog_stick_deadzone = 0.1f;
