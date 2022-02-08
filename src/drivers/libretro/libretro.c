@@ -1968,18 +1968,18 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
          zapdata[2] |= 0x1;
    }
    else if (zappermode == RetroPad) {
-		static float cursor_x=0.0f,cursor_y=0.0f;
+		static double cursor_x=0.0f,cursor_y=0.0f;
 
 		int slx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
 		int sly = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
 		int srx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
 		int sry = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
-		float speed_l=left_stick_speed*inv_analog_stick_acceleration;
-		float speed_r=right_stick_speed*inv_analog_stick_acceleration;
+		double speed_l=left_stick_speed*inv_analog_stick_acceleration;
+		double speed_r=right_stick_speed*inv_analog_stick_acceleration;
 
         double max = (float)0x8000*inv_analog_stick_acceleration;
-        double ax=(slx*speed_l+srx*speed_r);
-        double ay=(sly*speed_l+sry*speed_r);
+        double ax=speed_l*slx+speed_r*srx;
+        double ay=speed_l*sly+speed_r*sry;
         double radius2=ax*ax+ay*ay;
         double max1=analog_stick_deadzone*max;
         double max2=max1*max1;
@@ -1991,8 +1991,8 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
             double dr=radius3/radius;
 
             // Convert back to cartesian coordinates
-            ax = round(dr*ax);
-            ay = round(dr*ay);
+            ax *= dr;
+            ay *= dr;
         }
 		else{
 			ax=ay=0;
@@ -2009,7 +2009,6 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       /* Set crosshair within the limits of current screen resolution */
       if (cursor_x < min_width) cursor_x = min_width;
       else if (cursor_x > max_width) cursor_x = max_width;
-
       if (cursor_y < min_height) cursor_y = min_height;
       else if (cursor_y > max_height) cursor_y = max_height;
 
