@@ -938,7 +938,7 @@ static void update_nes_controllers(unsigned port, unsigned device)
          FCEU_printf(" Player %u: Zapper\n", port + 1);
          break;
       case RETRO_DEVICE_ARKANOID_MOUSE:
-      case RETRO_DEVICE_ARKANOID_SRICK:
+      case RETRO_DEVICE_ARKANOID_STICK:
          FCEUI_SetInput(port, SI_ARKANOID, nes_input.MouseData[port], 0);
          FCEU_printf(" Player %u: Arkanoid\n", port + 1);
          break;
