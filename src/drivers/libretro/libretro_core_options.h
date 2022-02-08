@@ -225,7 +225,7 @@ struct retro_core_option_v2_definition option_defs[] = {
          { "50%",    "0.5" },
          { NULL, NULL },
       },
-      "10%",
+      "5%",
    },
    {
       "fceumm_zapper_tolerance",
