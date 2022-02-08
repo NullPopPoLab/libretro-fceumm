@@ -96,6 +96,8 @@ static int aspect_ratio_par;
 
 static float left_stick_speed=0.5f;
 static float right_stick_speed=0.2f;
+static float analog_stick_deadzone=0.1f;
+float inv_analog_stick_acceleration = 1.0f/2048.0f;
 
 /*
  * Flags to keep track of whether turbo
@@ -1706,7 +1708,7 @@ static void check_variables(bool startup)
         left_stick_speed = (float) atof(var.value);
     }
     else
-        left_stick_speed = 0.5f;
+        left_stick_speed = 0.8f;
 
    var.key = "fceumm_right_stick_speed";
 
@@ -1716,6 +1718,15 @@ static void check_variables(bool startup)
     }
     else
         right_stick_speed = 0.2f;
+
+   var.key = "fceumm_stick_deadzone";
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        right_stick_speed = (float) atof(var.value);
+    }
+    else
+        right_stick_speed = 0.1f;
 
    var.key = "fceumm_zapper_tolerance";
 
@@ -1957,45 +1968,53 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
          zapdata[2] |= 0x1;
    }
    else if (zappermode == RetroPad) {
-		static float stick_lx=0.0f,stick_ly=0.0f,stick_rx=0.0f,stick_ry=0.0f;
+		static float cursor_x=0.0f,cursor_y=0.0f;
 
 		int slx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
 		int sly = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
 		int srx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
 		int sry = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
-		float speed_l=left_stick_speed/2048.0f;
-		float speed_r=right_stick_speed/2048.0f;
-		int sx,sy;
+		float speed_l=left_stick_speed*inv_analog_stick_acceleration;
+		float speed_r=right_stick_speed*inv_analog_stick_acceleration;
+
+        double max = (float)0x8000*inv_analog_stick_acceleration;
+        double ax=(slx*speed_l+srx*speed_r);
+        double ay=(sly*speed_l+sry*speed_r);
+        double radius2=ax*ax+ay*ay;
+        double max1=analog_stick_deadzone*max;
+        double max2=max1*max1;
+        if(radius2 > max2)
+        {
+            // Re-scale analog stick range to negate deadzone (makes slow movements possible)
+            double radius=sqrt(radius2);
+            double radius3 = radius - max1*(max/(max - max1));
+            double dr=radius3/radius;
+
+            // Convert back to cartesian coordinates
+            ax = round(dr*ax);
+            ay = round(dr*ay);
+        }
+		else{
+			ax=ay=0;
+		}
+
+		cursor_x+=ax;
+		cursor_y+=ay;
 
       min_width   = (adjx ? 8 : 0) + 1;
       min_height  = (adjy ? 8 : 0) + 1;
       max_width  -= (adjx ? 8 : 0);
       max_height -= (adjy ? 8 : 0);
 
-		stick_lx+=speed_l*slx;
-		stick_ly+=speed_l*sly;
-		stick_rx+=speed_r*srx;
-		stick_ry+=speed_r*sry;
-		slx=stick_lx;
-		sly=stick_ly;
-		srx=stick_rx;
-		sry=stick_ry;
-		stick_lx-=slx;
-		stick_ly-=sly;
-		stick_rx-=srx;
-		stick_ry-=sry;
-		sx=slx+srx;
-		sy=sly+sry;
-
       /* Set crosshair within the limits of current screen resolution */
-      if (sx < min_width) sx = min_width;
-      else if (sx > max_width) sx = max_width;
+      if (cursor_x < min_width) cursor_x = min_width;
+      else if (cursor_x > max_width) cursor_x = max_width;
 
-      if (sy < min_height) sy = min_height;
-      else if (sy > max_height) sy = max_height;
+      if (cursor_y < min_height) cursor_y = min_height;
+      else if (cursor_y > max_height) cursor_y = max_height;
 
-      zapdata[0] = sx;
-      zapdata[1] = sy;
+      zapdata[0] = cursor_x;
+      zapdata[1] = cursor_y;
 
       if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
          zapdata[2] |= 0x1;
