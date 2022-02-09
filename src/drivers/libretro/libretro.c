@@ -47,7 +47,7 @@
 #define MAX_PORTS 2   /* max controller ports,
                        * port 0 for player 1/3, port 1 for player 2/4 */
 
-#define RETRO_DEVICE_AUTO        RETRO_DEVICE_JOYPAD
+/*#define RETRO_DEVICE_AUTO        RETRO_DEVICE_JOYPAD*/
 #define RETRO_DEVICE_GAMEPAD     RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
 #define RETRO_DEVICE_ZAPPER      RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  0)
 #define RETRO_DEVICE_ARKANOID    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  1)
@@ -57,7 +57,7 @@
 #define RETRO_DEVICE_FC_SHADOW   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  4)
 #define RETRO_DEVICE_FC_4PLAYERS RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
 #define RETRO_DEVICE_FC_HYPERSHOT RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
-#define RETRO_DEVICE_FC_AUTO     RETRO_DEVICE_JOYPAD
+/*#define RETRO_DEVICE_FC_AUTO     RETRO_DEVICE_JOYPAD*/
 
 #define NES_WIDTH   256
 #define NES_HEIGHT  240
@@ -1025,10 +1025,10 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
    {
       if (port < 2) /* player 1-2 */
       {
-         if (device != RETRO_DEVICE_AUTO)
+/*         if (device != RETRO_DEVICE_AUTO)*/
             update_nes_controllers(port, device);
-         else
-            update_nes_controllers(port, nes_to_libretro(GameInfo->input[port]));
+/*         else
+            update_nes_controllers(port, nes_to_libretro(GameInfo->input[port]));*/
       }
       else
       {
@@ -1039,12 +1039,12 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 
             nes_input.type[port] = RETRO_DEVICE_NONE;
 
-            if (device == RETRO_DEVICE_AUTO)
+/*            if (device == RETRO_DEVICE_AUTO)
             {
                if (nes_input.enable_4player)
                   nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
             }
-            else if (device == RETRO_DEVICE_GAMEPAD)
+            else*/ if (device == RETRO_DEVICE_GAMEPAD)
                nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
 
             FCEU_printf(" Player %u: %s\n", port + 1,
@@ -1052,10 +1052,10 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
          }
          else /* do famicom controllers here */
          {
-            if (device != RETRO_DEVICE_FC_AUTO)
+/*            if (device != RETRO_DEVICE_FC_AUTO)*/
                update_nes_controllers(4, device);
-            else
-               update_nes_controllers(4, fc_to_libretro(GameInfo->inputfc));
+/*            else
+               update_nes_controllers(4, fc_to_libretro(GameInfo->inputfc));*/
          }
 
          if (nes_input.type[2] == RETRO_DEVICE_GAMEPAD
@@ -1273,34 +1273,38 @@ void retro_set_environment(retro_environment_t cb)
    struct retro_vfs_interface_info vfs_iface_info;
 
    static const struct retro_controller_description pads1[] = {
-      { "Auto",    RETRO_DEVICE_AUTO },
+/*      { "Auto",    RETRO_DEVICE_AUTO },*/
       { "Gamepad", RETRO_DEVICE_GAMEPAD },
-      { "Zapper",  RETRO_DEVICE_ZAPPER },
+/*      { "Zapper",  RETRO_DEVICE_ZAPPER },*/
       { 0, 0 },
    };
 
    static const struct retro_controller_description pads2[] = {
-      { "Auto",     RETRO_DEVICE_AUTO },
+/*      { "Auto",     RETRO_DEVICE_AUTO },*/
       { "Gamepad",  RETRO_DEVICE_GAMEPAD },
-      { "Arkanoid", RETRO_DEVICE_ARKANOID },
-      { "Zapper",   RETRO_DEVICE_ZAPPER },
+/*      { "Arkanoid", RETRO_DEVICE_ARKANOID },
+      { "Zapper",   RETRO_DEVICE_ZAPPER },*/
       { 0, 0 },
    };
 
    static const struct retro_controller_description pads3[] = {
-      { "Auto",     RETRO_DEVICE_AUTO },
+/*      { "Auto",     RETRO_DEVICE_AUTO },*/
       { "Gamepad",  RETRO_DEVICE_GAMEPAD },
+      { "None",  RETRO_DEVICE_NONE },
       { 0, 0 },
    };
 
    static const struct retro_controller_description pads4[] = {
-      { "Auto",     RETRO_DEVICE_AUTO },
+/*      { "Auto",     RETRO_DEVICE_AUTO },*/
       { "Gamepad",  RETRO_DEVICE_GAMEPAD },
+      { "None",  RETRO_DEVICE_NONE },
       { 0, 0 },
    };
 
    static const struct retro_controller_description pads5[] = {
-      { "Auto",                  RETRO_DEVICE_FC_AUTO },
+/*      { "Auto",                  RETRO_DEVICE_FC_AUTO },*/
+      { "None",  RETRO_DEVICE_NONE },
+      { "Zapper",   RETRO_DEVICE_ZAPPER },
       { "Arkanoid",              RETRO_DEVICE_FC_ARKANOID },
       { "(Bandai) Hyper Shot",   RETRO_DEVICE_FC_SHADOW },
       { "(Konami) Hyper Shot",   RETRO_DEVICE_FC_HYPERSHOT },
@@ -1310,11 +1314,11 @@ void retro_set_environment(retro_environment_t cb)
    };
 
    static const struct retro_controller_info ports[] = {
-      { pads1, 3 },
-      { pads2, 4 },
+      { pads1, 1 },
+      { pads2, 1 },
       { pads3, 2 },
       { pads4, 2 },
-      { pads5, 6 },
+      { pads5, 7 },
       { 0, 0 },
    };
 
@@ -1928,8 +1932,8 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       max_height -= (adjy ? 8 : 0);
 
       /* TODO: Add some sort of mouse sensitivity */
-      mzx += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-      mzy += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+      mzx += input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+      mzy += input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
       /* Set crosshair within the limits of current screen resolution */
       if (mzx < min_width) mzx = min_width;
@@ -1941,9 +1945,9 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       zapdata[0] = mzx;
       zapdata[1] = mzy;
 
-      if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+      if (input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
          zapdata[2] |= 0x1;
-      if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+      if (input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
          zapdata[2] |= 0x2;
    }
    else if (zappermode == RetroPointer) {
@@ -2015,9 +2019,9 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       zapdata[0] = cursor_x;
       zapdata[1] = cursor_y;
 
-      if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+      if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
          zapdata[2] |= 0x1;
-      if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+      if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
          zapdata[2] |= 0x2;
    }
    else /* lightgun device */
