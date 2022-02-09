@@ -932,7 +932,12 @@ static void update_nes_controllers(unsigned port, unsigned device)
          FCEU_printf(" Player %u: None Connected\n", port + 1);
          break;
       default:
-		switch(maindevice){
+		if(port>0){
+			nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
+			FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
+			FCEU_printf(" Player %u: Gamepad\n", port + 1);
+		}
+		else switch(maindevice){
 			case MainZapper:
 			nes_input.type[port] = RETRO_DEVICE_ZAPPER;
 			FCEUI_SetInput(port, SI_ZAPPER, nes_input.MouseData[port], 1);
