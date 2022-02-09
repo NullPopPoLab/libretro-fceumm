@@ -1272,7 +1272,6 @@ void retro_set_environment(retro_environment_t cb)
 {
    struct retro_vfs_interface_info vfs_iface_info;
 
-#if 0
    static const struct retro_controller_description pads1[] = {
       { "Auto",    RETRO_DEVICE_AUTO },
       { "Gamepad", RETRO_DEVICE_GAMEPAD },
@@ -1318,7 +1317,6 @@ void retro_set_environment(retro_environment_t cb)
       { pads5, 6 },
       { 0, 0 },
    };
-#endif
 
    static const struct retro_system_content_info_override content_overrides[] = {
       {
@@ -1331,7 +1329,7 @@ void retro_set_environment(retro_environment_t cb)
 
    environ_cb = cb;
 
-/*   environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);*/
+   environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
 
    vfs_iface_info.required_interface_version = 1;
    vfs_iface_info.iface                      = NULL;
@@ -1972,10 +1970,10 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
    else if (zappermode == RetroPad) {
 		static double cursor_x=0.0f,cursor_y=0.0f;
 
-		int slx = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
-		int sly = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
-		int srx = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
-		int sry = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
+		int slx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+		int sly = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+		int srx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
+		int sry = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
 		double speed_l=left_stick_speed*inv_analog_stick_acceleration;
 		double speed_r=right_stick_speed*inv_analog_stick_acceleration;
 
