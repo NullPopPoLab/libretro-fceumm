@@ -932,7 +932,7 @@ static void update_nes_controllers(unsigned port, unsigned device)
          FCEU_printf(" Player %u: None Connected\n", port + 1);
          break;
       default:
-		if(port>0){
+		if(port!=1){
 			nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
 			FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
 			FCEU_printf(" Player %u: Gamepad\n", port + 1);
@@ -941,14 +941,12 @@ static void update_nes_controllers(unsigned port, unsigned device)
 			case MainZapper:
 			nes_input.type[port] = RETRO_DEVICE_ZAPPER;
 			FCEUI_SetInput(port, SI_ZAPPER, nes_input.MouseData[port], 1);
-			FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
 			FCEU_printf(" Player %u: Zapper\n", port + 1);
 			break;
 
 			case MainPaddle:
 			nes_input.type[port] = RETRO_DEVICE_ARKANOID;
 			FCEUI_SetInput(port, SI_ARKANOID, nes_input.MouseData[port], 0);
-			FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
 			FCEU_printf(" Player %u: Arkanoid\n", port + 1);
 			break;
 
@@ -1975,8 +1973,8 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       max_height -= (adjy ? 8 : 0);
 
       /* TODO: Add some sort of mouse sensitivity */
-      mzx[port] += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-      mzy[port] += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+      mzx[port] += input_cb(1, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+      mzy[port] += input_cb(1, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
       /* Set crosshair within the limits of current screen resolution */
       if (mzx[port] < min_width) mzx[port] = min_width;
@@ -1988,17 +1986,17 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       zapdata[0] = mzx[port];
       zapdata[1] = mzy[port];
 
-      if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+      if (input_cb(1, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
          zapdata[2] |= 0x1;
-      if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+      if (input_cb(1, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
          zapdata[2] |= 0x2;
    }
    else if (zappermode == RetroPointer) {
       int offset_x = (adjx ? 0X8FF : 0);
       int offset_y = (adjy ? 0X999 : 0);
 
-      int _x = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
-      int _y = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
+      int _x = input_cb(1, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
+      int _y = input_cb(1, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
 
       if (_x == 0 && _y == 0)
       {
@@ -2011,7 +2009,7 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
          zapdata[1] = (_y + (0x7FFF + offset_y)) * max_height  / ((0x7FFF + offset_y) * 2);
       }
 
-      if (input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED))
+      if (input_cb(1, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED))
          zapdata[2] |= 0x1;
    }
    else if (zappermode == RetroPad) {
@@ -2076,9 +2074,9 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       int offscreen_shot;
       int trigger;
 
-      offscreen = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN );
-      offscreen_shot = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD );
-      trigger = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER );
+      offscreen = input_cb( 1, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN );
+      offscreen_shot = input_cb( 1, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD );
+      trigger = input_cb( 1, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER );
 
       if ( offscreen || offscreen_shot )
       {
@@ -2087,8 +2085,8 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       }
       else
       {
-         int _x = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X);
-         int _y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
+         int _x = input_cb(1, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X);
+         int _y = input_cb(1, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
 
          zapdata[0] = (_x + (0x7FFF + offset_x)) * max_width  / ((0x7FFF + offset_x) * 2);
          zapdata[1] = (_y + (0x7FFF + offset_y)) * max_height  / ((0x7FFF + offset_y) * 2);
