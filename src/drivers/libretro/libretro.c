@@ -152,6 +152,8 @@ typedef struct {
 } NES_INPUT_T;
 
 static NES_INPUT_T nes_input = { 0 };
+enum RetroMainInputModes{MainGamepad, MainZapper, MainPaddle};
+static enum RetroMainInputModes maindevice = MainGamepad;
 enum RetroZapperInputModes{RetroLightgun, RetroMouse, RetroPointer, RetroPad};
 static enum RetroZapperInputModes zappermode = RetroLightgun;
 
@@ -929,6 +931,28 @@ static void update_nes_controllers(unsigned port, unsigned device)
          FCEUI_SetInput(port, SI_NONE, &Dummy, 0);
          FCEU_printf(" Player %u: None Connected\n", port + 1);
          break;
+      default:
+		switch(maindevice){
+			case MainZapper:
+			nes_input.type[port] = RETRO_DEVICE_ZAPPER;
+			FCEUI_SetInput(port, SI_ZAPPER, nes_input.MouseData[port], 1);
+			FCEU_printf(" Player %u: Zapper\n", port + 1);
+			break;
+
+			case MainPaddle:
+			nes_input.type[port] = RETRO_DEVICE_ARKANOID;
+			FCEUI_SetInput(port, SI_ARKANOID, nes_input.MouseData[port], 0);
+			FCEU_printf(" Player %u: Arkanoid\n", port + 1);
+			break;
+
+			default:
+			case MainGamepad:
+			nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
+			FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
+			FCEU_printf(" Player %u: Gamepad\n", port + 1);
+			break;
+		}
+#if 0
       case RETRO_DEVICE_ZAPPER:
          FCEUI_SetInput(port, SI_ZAPPER, nes_input.MouseData[port], 1);
          FCEU_printf(" Player %u: Zapper\n", port + 1);
@@ -943,6 +967,7 @@ static void update_nes_controllers(unsigned port, unsigned device)
          FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
          FCEU_printf(" Player %u: Gamepad\n", port + 1);
          break;
+#endif
       }
    }
 
@@ -979,6 +1004,7 @@ static void update_nes_controllers(unsigned port, unsigned device)
    }
 }
 
+#if 0
 static unsigned nes_to_libretro(int d)
 {
    switch(d)
@@ -1018,6 +1044,7 @@ static unsigned fc_to_libretro(int d)
 
    return (RETRO_DEVICE_NONE);
 }
+#endif
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
@@ -1289,15 +1316,15 @@ void retro_set_environment(retro_environment_t cb)
 
    static const struct retro_controller_description pads3[] = {
 /*      { "Auto",     RETRO_DEVICE_AUTO },*/
-      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
       { "None",  RETRO_DEVICE_NONE },
+      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
       { 0, 0 },
    };
 
    static const struct retro_controller_description pads4[] = {
 /*      { "Auto",     RETRO_DEVICE_AUTO },*/
-      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
       { "None",  RETRO_DEVICE_NONE },
+      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
       { 0, 0 },
    };
 
@@ -1695,6 +1722,15 @@ static void check_variables(bool startup)
       }
    }
 
+   var.key = "fceumm_main_device";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "zapper")) maindevice = MainZapper;
+      else if (!strcmp(var.value, "paddle")) maindevice = MainPaddle;
+      else maindevice = MainGamepad; /*default setting*/
+   }
+
    var.key = "fceumm_zapper_mode";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1906,7 +1942,8 @@ static void check_variables(bool startup)
    update_option_visibility();
 }
 
-static int mzx = 0, mzy = 0;
+static int mzx[5] = {0,0,0,0,0};
+static int mzy[5] = {0,0,0,0,0};
 
 void get_mouse_input(unsigned port, uint32_t *zapdata)
 {
@@ -1932,22 +1969,22 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       max_height -= (adjy ? 8 : 0);
 
       /* TODO: Add some sort of mouse sensitivity */
-      mzx += input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-      mzy += input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+      mzx[port] += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+      mzy[port] += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
       /* Set crosshair within the limits of current screen resolution */
-      if (mzx < min_width) mzx = min_width;
-      else if (mzx > max_width) mzx = max_width;
+      if (mzx[port] < min_width) mzx[port] = min_width;
+      else if (mzx[port] > max_width) mzx[port] = max_width;
 
-      if (mzy < min_height) mzy = min_height;
-      else if (mzy > max_height) mzy = max_height;
+      if (mzy[port] < min_height) mzy[port] = min_height;
+      else if (mzy[port] > max_height) mzy[port] = max_height;
 
-      zapdata[0] = mzx;
-      zapdata[1] = mzy;
+      zapdata[0] = mzx[port];
+      zapdata[1] = mzy[port];
 
-      if (input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+      if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
          zapdata[2] |= 0x1;
-      if (input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+      if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
          zapdata[2] |= 0x2;
    }
    else if (zappermode == RetroPointer) {
@@ -1972,7 +2009,8 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
          zapdata[2] |= 0x1;
    }
    else if (zappermode == RetroPad) {
-		static double cursor_x=0.0f,cursor_y=0.0f;
+		static double cursor_x[5]={0,0,0,0,0};
+		static double cursor_y[5]={0,0,0,0,0};
 
 		int slx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
 		int sly = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
@@ -2002,8 +2040,8 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
 			ax=ay=0;
 		}
 
-		cursor_x+=ax;
-		cursor_y+=ay;
+		cursor_x[port]+=ax;
+		cursor_y[port]+=ay;
 
       min_width   = (adjx ? 8 : 0) + 1;
       min_height  = (adjy ? 8 : 0) + 1;
@@ -2011,13 +2049,13 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       max_height -= (adjy ? 8 : 0);
 
       /* Set crosshair within the limits of current screen resolution */
-      if (cursor_x < min_width) cursor_x = min_width;
-      else if (cursor_x > max_width) cursor_x = max_width;
-      if (cursor_y < min_height) cursor_y = min_height;
-      else if (cursor_y > max_height) cursor_y = max_height;
+      if (cursor_x[port] < min_width) cursor_x[port] = min_width;
+      else if (cursor_x[port] > max_width) cursor_x[port] = max_width;
+      if (cursor_y[port] < min_height) cursor_y[port] = min_height;
+      else if (cursor_y[port] > max_height) cursor_y[port] = max_height;
 
-      zapdata[0] = cursor_x;
-      zapdata[1] = cursor_y;
+      zapdata[0] = cursor_x[port];
+      zapdata[1] = cursor_y[port];
 
       if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
          zapdata[2] |= 0x1;

@@ -117,6 +117,20 @@ struct retro_core_option_v2_definition option_defs[] = {
       "8:7 PAR",
    },
    {
+      "fceumm_main_device",
+      "Main Control Device",
+      NULL,
+      "Controller type of port 1,2",
+      NULL,
+      "input",
+      {
+         { "gamepad",  "Gamepad" },
+         { "zapper",  "Zapper" },
+         { NULL, NULL },
+      },
+      "gamepad",
+   },
+   {
       "fceumm_zapper_mode",
       "Zapper Mode",
       NULL,
