@@ -48,7 +48,7 @@
                        * port 0 for player 1/3, port 1 for player 2/4 */
 
 /*#define RETRO_DEVICE_AUTO        RETRO_DEVICE_JOYPAD*/
-#define RETRO_DEVICE_GAMEPAD     RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+#define RETRO_DEVICE_GAMEPAD     RETRO_DEVICE_ANALOG
 #define RETRO_DEVICE_ZAPPER      RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  0)
 #define RETRO_DEVICE_ARKANOID    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  1)
 
@@ -936,12 +936,14 @@ static void update_nes_controllers(unsigned port, unsigned device)
 			case MainZapper:
 			nes_input.type[port] = RETRO_DEVICE_ZAPPER;
 			FCEUI_SetInput(port, SI_ZAPPER, nes_input.MouseData[port], 1);
+			FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
 			FCEU_printf(" Player %u: Zapper\n", port + 1);
 			break;
 
 			case MainPaddle:
 			nes_input.type[port] = RETRO_DEVICE_ARKANOID;
 			FCEUI_SetInput(port, SI_ARKANOID, nes_input.MouseData[port], 0);
+			FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
 			FCEU_printf(" Player %u: Arkanoid\n", port + 1);
 			break;
 
@@ -1331,7 +1333,6 @@ void retro_set_environment(retro_environment_t cb)
    static const struct retro_controller_description pads5[] = {
 /*      { "Auto",                  RETRO_DEVICE_FC_AUTO },*/
       { "None",  RETRO_DEVICE_NONE },
-      { "Zapper",   RETRO_DEVICE_ZAPPER },
       { "Arkanoid",              RETRO_DEVICE_FC_ARKANOID },
       { "(Bandai) Hyper Shot",   RETRO_DEVICE_FC_SHADOW },
       { "(Konami) Hyper Shot",   RETRO_DEVICE_FC_HYPERSHOT },
@@ -1345,7 +1346,7 @@ void retro_set_environment(retro_environment_t cb)
       { pads2, 1 },
       { pads3, 2 },
       { pads4, 2 },
-      { pads5, 7 },
+      { pads5, 6 },
       { 0, 0 },
    };
 
@@ -2012,10 +2013,10 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
 		static double cursor_x[5]={0,0,0,0,0};
 		static double cursor_y[5]={0,0,0,0,0};
 
-		int slx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
-		int sly = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
-		int srx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
-		int sry = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
+		int slx = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+		int sly = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+		int srx = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
+		int sry = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
 		double speed_l=left_stick_speed*inv_analog_stick_acceleration;
 		double speed_r=right_stick_speed*inv_analog_stick_acceleration;
 
@@ -2057,9 +2058,9 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
       zapdata[0] = cursor_x[port];
       zapdata[1] = cursor_y[port];
 
-      if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+      if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
          zapdata[2] |= 0x1;
-      if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+      if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
          zapdata[2] |= 0x2;
    }
    else /* lightgun device */
