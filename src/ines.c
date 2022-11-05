@@ -362,13 +362,15 @@ static void CheckHInfo(void)
       iNESCart.mirror = 2;
 
    if (tofix) {
+      size_t gigastr_len;
       char gigastr[768];
       strcpy(gigastr, " The iNES header contains incorrect information.  For now, the information will be corrected in RAM. ");
+      gigastr_len = strlen(gigastr);
       if (tofix & 1)
-         sprintf(gigastr + strlen(gigastr), "Current mapper # is %d. The mapper number should be set to %d. ", current_mapper, iNESCart.mapper);
+         sprintf(gigastr + gigastr_len, "Current mapper # is %d. The mapper number should be set to %d. ", current_mapper, iNESCart.mapper);
       if (tofix & 2) {
          uint8 *mstr[3] = { (uint8_t*)"Horizontal", (uint8_t*)"Vertical", (uint8_t*)"Four-screen" };
-         sprintf(gigastr + strlen(gigastr), "Current mirroring is %s. Mirroring should be set to \"%s\". ", mstr[cur_mirr & 3], mstr[iNESCart.mirror & 3]);
+         sprintf(gigastr + gigastr_len, "Current mirroring is %s. Mirroring should be set to \"%s\". ", mstr[cur_mirr & 3], mstr[iNESCart.mirror & 3]);
       }
       if (tofix & 4)
          strcat(gigastr, "The battery-backed bit should be set.  ");
@@ -376,19 +378,19 @@ static void CheckHInfo(void)
          strcat(gigastr, "This game should not have any CHR ROM.  ");
       if (tofix & 16) {
          uint8 *rstr[4] = { (uint8*)"NTSC", (uint8*)"PAL", (uint8*)"Multi", (uint8*)"Dendy" };
-         sprintf(gigastr + strlen(gigastr), "This game should run with \"%s\" timings.", rstr[iNESCart.region]);
+         sprintf(gigastr + gigastr_len, "This game should run with \"%s\" timings.", rstr[iNESCart.region]);
       }
       if (tofix & 32) {
          unsigned PRGRAM = iNESCart.PRGRamSize + iNESCart.PRGRamSaveSize;
          unsigned CHRRAM = iNESCart.CHRRamSize + iNESCart.CHRRamSaveSize;
          if (PRGRAM || CHRRAM) {
             if (iNESCart.PRGRamSaveSize == 0)
-               sprintf(gigastr + strlen(gigastr), "workram: %d KB, ", PRGRAM / 1024);
+               sprintf(gigastr + gigastr_len, "workram: %d KB, ", PRGRAM / 1024);
             else if (iNESCart.PRGRamSize == 0)
-               sprintf(gigastr + strlen(gigastr), "saveram: %d KB, ", PRGRAM / 1024);
+               sprintf(gigastr + gigastr_len, "saveram: %d KB, ", PRGRAM / 1024);
             else
-               sprintf(gigastr + strlen(gigastr), "workram: %d KB (%dKB battery-backed), ", PRGRAM / 1024, iNESCart.PRGRamSaveSize / 1024);
-            sprintf(gigastr + strlen(gigastr), "chrram: %d KB.", (CHRRAM + iNESCart.CHRRamSaveSize) / 1024);
+               sprintf(gigastr + gigastr_len, "workram: %d KB (%dKB battery-backed), ", PRGRAM / 1024, iNESCart.PRGRamSaveSize / 1024);
+            sprintf(gigastr + gigastr_len, "chrram: %d KB.", (CHRRAM + iNESCart.CHRRamSaveSize) / 1024);
          }
       }
       strcat(gigastr, "\n");
@@ -813,10 +815,20 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "820401/T-217",             436, Mapper436_Init         )
 	INES_BOARD( "NTDEC TH2348",             437, Mapper437_Init         )
 	INES_BOARD( "K-3071",                   438, Mapper438_Init         )
+	INES_BOARD( "850335C",                  441, Mapper441_Init         )
 	INES_BOARD( "NC-3000M",                 443, Mapper443_Init         )
 	INES_BOARD( "NC-7000M/NC-8000M",        444, Mapper444_Init         )
+	INES_BOARD( "22-in-1 King Series",      449, Mapper449_Init         )
 	INES_BOARD( "DS-9-27",                  452, Mapper452_Init         )
+	INES_BOARD( "N625836",                  455, Mapper455_Init         )
 	INES_BOARD( "K6C3001A",                 456, Mapper456_Init         )
+	INES_BOARD( "8-in-1",                   459, Mapper459_Init         )
+	INES_BOARD( "FC-29-40/K-3101",        	460, Mapper460_Init         )
+	INES_BOARD( "0324",                 	461, Mapper461_Init         )
+	INES_BOARD( "YH810X1",                 	463, Mapper463_Init         )
+	INES_BOARD( "NTDEC 9012",          	464, Mapper464_Init         )
+	INES_BOARD( "ET-120",                 	465, Mapper465_Init         )
+	INES_BOARD( "Keybyte Computer",        	466, Mapper466_Init         )
 	INES_BOARD( "47-2",                 	467, Mapper467_Init         )
 	INES_BOARD( "SA-9602B",                 513, SA9602B_Init           )
 	INES_BOARD( "Brilliant Com Cocoma Pack", 516, Mapper516_Init        )
