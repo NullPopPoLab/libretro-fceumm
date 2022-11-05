@@ -111,16 +111,18 @@
 	{ 0x02863604,    2, DEFAULT,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Sukeban Deka III (Japan).nes */
 	{ 0x419461d0,    2, DEFAULT,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Super Cars (USA).nes */
 
-	/* CNROM by default has bus conflicts enabled, these requires no bus conflict to play correctly */	
-	{ 0x2915faf0,    3,       1,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Incantation (Asia) (Ja) (Unl).nes */
-	{ 0x8f154a0d,    3,       1,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Pu Ke Jing Ling (Asia) (Unl).nes */
-	{ 0xb0c871c5,    3,       1,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Wei Lai Xiao Zi (Joy Van).nes */
-	{ 0xb3be2f71,    3,       1,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Yanshan Chess (Unl).nes */
-	{ 0xd04a40e6,    3,       1,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Bingo 75 (Asia) (Ja) (Unl).nes */
-	{ 0xe41b440f,    3,       1,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Sidewinder (Joy Van).nes */
-	{ 0xebd0644d,    3,       1,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Master Chu & The Drunkard Hu (Joy Van).nes */
-	{ 0xf283cf58,    3,       1,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Colorful Dragon (Sachen).nes */
-	{ 0x2deb12b8,    3,       1,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Venice Beach Volleyball (Asia) (Ja) (Super Mega) (Unl).nes */
+	/* CNROM by default has bus conflicts disabled, set to submapper 2 to enable bus conflicts */
+	{ 0xac8dcdea,    3,       2,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Cybernoid - The Fighting Machine (USA).nes */
+
+	{ 0x2915faf0,    3,       0,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Incantation (Asia) (Ja) (Unl).nes */
+	{ 0x8f154a0d,    3,       0,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Pu Ke Jing Ling (Asia) (Unl).nes */
+	{ 0xb0c871c5,    3,       0,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Wei Lai Xiao Zi (Joy Van).nes */
+	{ 0xb3be2f71,    3,       0,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Yanshan Chess (Unl).nes */
+	{ 0xd04a40e6,    3,       0,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Bingo 75 (Asia) (Ja) (Unl).nes */
+	{ 0xe41b440f,    3,       0,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Sidewinder (Joy Van).nes */
+	{ 0xebd0644d,    3,       0,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Master Chu & The Drunkard Hu (Joy Van).nes */
+	{ 0xf283cf58,    3,       0,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Colorful Dragon (Sachen).nes */
+	{ 0x2deb12b8,    3,       0,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Venice Beach Volleyball (Asia) (Ja) (Super Mega) (Unl).nes */
 
 	{ 0xdbf90772,    3, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Alpha Mission (USA).nes */
 	{ 0xd858033d,    3, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* ASO - Armored Scrum Object (J).nes */
@@ -363,6 +365,7 @@
 	{ 0x1C098942,  162,       0,    MI_H, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 西游记后传 */
 	/* Mapper 162: Nanjing games that use an FS304 feature as a protection check */
 	{ 0x8589652D,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 农场小精灵 */
+	{ 0x99FE9AB5,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 时空斗士 - Pegasus Senya */
 	{ 0x82F204AE,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 梁山英雄 */
 	
 	/* Mapper 163: Nanjing, running with $5300=$04 */
@@ -430,7 +433,7 @@
 	{ 0xB35BE92F,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 圣斗士星矢: 北欧突击篇 */
 	{ 0x15E50ECD,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 宠物高达战记 */
 	{ 0xBBAB3A61,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 拳皇R-1: 最强格斗王 */
-	{ 0x2DA3A49C,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 时空斗士 - Pegasus Senya */
+	{ 0x2DA3A49C,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 时空斗士 - Pegasus Senya, turns out to be wrong after all, and the mapper 162 one is the correct one */
 	{ 0x222A136A,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 武侠天地 */
 	{ 0xEBC6E2E2,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 毁灭之神 */
 	{ 0xE08AB52E,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 魔兽世界: 恶魔猎人 */
@@ -453,7 +456,6 @@
 	{ 0x054444A0,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 圣斗士星矢: 北欧突击篇 */
 	{ 0x9BA518BA,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 宠物高达战记 */
 	{ 0x4CE082F8,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 拳皇R-1: 最强格斗王 */
-	{ 0x99FE9AB5,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 时空斗士 - Pegasus Senya */
 	{ 0x57414FB6,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 武侠天地 */
 	{ 0x979239DE,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 毁灭之神 */
 	{ 0xEFF96E8A,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 魔兽世界: 恶魔猎人 */
@@ -911,12 +913,14 @@
 	{ 0x6e149729,  189, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Master Fighter II (Unl) [a1].nes */
 	{ 0x60bfeb0c,   90, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Mortal Kombat 2 (Unl) [!].nes */
 	{ 0x247cc73d,  150, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Poker II (Asia) (Ja) (Unl).nes */
-	{ 0x1f1326d4,  121, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Super Sonic 5 (1997) (Unl) [!].nes */
-	{ 0x99748230,  215, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* EarthWorm Jim 2 (SuperGame).nes */
-	{ 0x37876ac7,  215, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Golden Card 6-in-1 (Unl) [!].nes */
-	{ 0x1a3320a3,  215, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Mortal Kombat 3 (SuperGame).nes */
-	{ 0x80eb1839,  114, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Boogerman (Sugar Softec) (Unl) [!].nes */
-	{ 0x071e4ee8,  114, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* ?? m114,submapper 1 test rom */
+	{ 0x1f1326d4,  121, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Super Sonic 5 (1997) (Unl) [!].nes */
+	{ 0x99748230,  215, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* EarthWorm Jim 2 (SuperGame).nes */
+	{ 0x37876ac7,  215, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Golden Card 6-in-1 (Unl) [!].nes */
+	{ 0x1a3320a3,  215, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Mortal Kombat 3 (SuperGame).nes */
+	{ 0xec70f8d8,  258, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* 1997 留念: 港-京 - Super Hang-On (protected version, CHR doubled) */
+	{ 0x224989d9,  258, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* 1997 留念: 港-京 - Super Hang-On (protected version) */
+	{ 0x80eb1839,  114,       1, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Boogerman (Sugar Softec) (Unl) [!].nes */
+	{ 0x071e4ee8,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* ?? m114,submapper 1 test rom */
 	{ 0xfe3e03a1,  197, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Mortal Kombat III Special (YY-030) (Ch) [!].nes */
 	{ 0x9151d311,  197, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Mortal Kombat III 28 Peoples (NT-328) (Ch) [!].nes */
 	{ 0x272709b9,  237, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Teletubbies Y2K (420-in-1).nes */
@@ -965,4 +969,4 @@
 
 	{ 0x00000000, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }
 
-#endif
+#endif

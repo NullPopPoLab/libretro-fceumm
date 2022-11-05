@@ -28,20 +28,17 @@
 #include "mmc3.h"
 
 uint8 MMC3_cmd;
-uint8 *WRAM;
-uint32 WRAMSIZE;
-uint8 *CHRRAM;
-uint32 CHRRAMSIZE;
+static uint8 *WRAM;
+static uint32 WRAMSIZE;
+static uint8 *CHRRAM;
+static uint32 CHRRAMSIZE;
 uint8 DRegBuf[8];
 uint8 EXPREGS[8];	/* For bootleg games, mostly. */
 uint8 A000B, A001B;
 uint8 mmc3opts = 0;
 
-#undef IRQCount
-#undef IRQLatch
-#undef IRQa
-uint8 IRQCount, IRQLatch, IRQa;
-uint8 IRQReload;
+static uint8 IRQCount, IRQLatch, IRQa;
+static uint8 IRQReload;
 
 static SFORMAT MMC3_StateRegs[] =
 {
@@ -477,27 +474,33 @@ void Mapper44_Init(CartInfo *info) {
 /* ---------------------------- Mapper 45 ------------------------------- */
 
 static void M45CW(uint32 A, uint8 V) {
-	if (!UNIFchrrama) {
-		uint32 NV = V;
-		if (EXPREGS[2] & 8)
-			NV &= (1 << ((EXPREGS[2] & 7) + 1)) - 1;
-		else
-		if (EXPREGS[2])
-			NV &= 0;	/* hack ;( don't know exactly how it should be */
-		NV |= EXPREGS[0] | ((EXPREGS[2] & 0xF0) << 4);
-		setchr1(A, NV);
-	} else
-		/* setchr8(0); */		/* i don't know what cart need this, but a new one need other lol */
+	if (CHRsize[0] ==8192)
 		setchr1(A, V);
+	else {
+		int chrAND =0xFF >>(~EXPREGS[2] &0xF);
+		int chrOR  =EXPREGS[0] | EXPREGS[2] <<4 &0xF00;
+		setchr1(A, V &chrAND | chrOR &~chrAND);
+	}
+}
+
+static DECLFR(M45ReadOB) {
+	return X.DB;
 }
 
 static void M45PW(uint32 A, uint8 V) {
-	uint32 MV = V & ((EXPREGS[3] & 0x3F) ^ 0x3F);
-	MV |= EXPREGS[1];
-	if(UNIFchrrama)
-		MV |= ((EXPREGS[2] & 0x40) << 2);
-	setprg8(A, MV);
-/*	FCEU_printf("1:%02x 2:%02x 3:%02x A=%04x V=%03x\n",EXPREGS[1],EXPREGS[2],EXPREGS[3],A,MV); */
+	int prgAND =~EXPREGS[3] &0x3F;
+	int prgOR  =EXPREGS[1] | EXPREGS[2] <<2 &0x300;
+	setprg8(A, V &prgAND | prgOR &~prgAND);
+
+	/* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
+	   The menu code selects between menus by checking which of the higher address lines disables PRG-ROM when set. */
+	if (PRGsize[0] <0x200000 && EXPREGS[5] ==1 && EXPREGS[1] &0x80 ||
+	    PRGsize[0] <0x200000 && EXPREGS[5] ==2 && EXPREGS[2] &0x40 ||
+	    PRGsize[0] <0x100000 && EXPREGS[5] ==3 && EXPREGS[1] &0x40 ||
+	    PRGsize[0] <0x100000 && EXPREGS[5] ==4 && EXPREGS[2] &0x20)
+		SetReadHandler(0x8000, 0xFFFF, M45ReadOB);
+	else
+		SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
 static DECLFW(M45Write) {
@@ -594,7 +597,7 @@ static void M49PW(uint32 A, uint8 V) {
 		V |= (EXPREGS[0] & 0xC0) >> 2;
 		setprg8(A, V);
 	} else
-		setprg32(0x8000, (EXPREGS[0] >> 4) & 3);
+		setprg32(0x8000, (EXPREGS[0] >> 4) & 15);
 }
 
 static void M49CW(uint32 A, uint8 V) {
@@ -792,10 +795,8 @@ static void M114Reset(void) {
 
 void Mapper114_Init(CartInfo *info) {
 	isRevB = 0;
-	type_Boogerman = 0;
-	if (info->CRC32 == 0x80eb1839 ||	/* Boogerman (Sugar Softec) (Unl) [!] - submapper 1 */
-		info->CRC32 == 0x071e4ee8)		/* 114 test-rom https://forums.nesdev.com/viewtopic.php?f=3&t=17391 */
-		type_Boogerman = 1;
+	/* Use NES 2.0 submapper to identify scrambling pattern, otherwise CRC32 for Boogerman and test rom */
+	type_Boogerman = info->iNES2? (info->submapper ==1): (info->CRC32 ==0x80eb1839 || info->CRC32 ==0x071e4ee8);
 
 	GenMMC3_Init(info, 256, 256, 0, 0);
 	pwrap = M114PWRAP;
@@ -884,49 +885,6 @@ void Mapper119_Init(CartInfo *info) {
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
    AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-}
-
-/* ---------------------------- Mapper 134 ------------------------------ */
-/* ---------------------------- UNL-T4A54A ------------------------------ */
-
-/* UNL-T4A54A, functionally the same as mapper 134.
- * Writes @ $6801. Menu @ prg $20000, chr $00000 */
-
-static void M134PW(uint32 A, uint8 V) {
-	uint8 mask = (EXPREGS[0] & 0x04) ? 0x0F : 0x1F;
-	setprg8(A, (V & mask) | ((EXPREGS[0] & 3) << 4));
-}
-
-static void M134CW(uint32 A, uint8 V) {
-	uint8 mask = (EXPREGS[0] & 0x04) ? 0x7F : 0xFF;
-	setchr1(A, (V & mask) | ((EXPREGS[0] & 0x30) << 3));
-}
-
-static DECLFW(M134Write) {
-	EXPREGS[0] = V;
-	FixMMC3CHR(MMC3_cmd);
-	FixMMC3PRG(MMC3_cmd);
-}
-
-static void M134Power(void) {
-	EXPREGS[0] = 0x01;
-	GenMMC3Power();
-	SetWriteHandler(0x6001, 0x6001, M134Write);
-	SetWriteHandler(0x6801, 0x6801, M134Write);
-}
-
-static void M134Reset(void) {
-	EXPREGS[0] = 0x01;
-	MMC3RegReset();
-}
-
-void Mapper134_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 0, 0);
-	pwrap = M134PW;
-	cwrap = M134CW;
-	info->Power = M134Power;
-	info->Reset = M134Reset;
-	AddExState(EXPREGS, 4, 0, "EXPR");
 }
 
 /* ---------------------------- Mapper 165 ------------------------------ */

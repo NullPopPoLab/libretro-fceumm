@@ -259,10 +259,9 @@ else ifneq (,$(filter $(platform), ps3 psl1ght))
     ENDIANNESS_DEFINES =  -DMSB_FIRST
     EXTERNAL_ZLIB = 1
     STATIC_LINKING = 1
-
-    ifneq ($(platdef),)
-        PLATFORM_DEFINES += -D$(platdef)
-    else
+    PLATFORM_DEFINES += -D__PS3__
+    
+    ifeq ($(platform), psl1ght)
         PLATFORM_DEFINES += -D__PSL1GHT__
     endif
 
@@ -449,6 +448,17 @@ else ifeq ($(platform), retrofw)
 	fpic := -fPIC
 	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
 	PLATFORM_DEFINES += -ffast-math -march=mips32 -mtune=mips32 -mhard-float -fomit-frame-pointer
+	EXTERNAL_ZLIB = 1
+
+# Miyoo
+else ifeq ($(platform), miyoo)
+	TARGET := $(TARGET_NAME)_libretro.so
+	CC = /opt/miyoo/usr/bin/arm-linux-gcc
+	CXX = /opt/miyoo/usr/bin/arm-linux-g++
+	AR = /opt/miyoo/usr/bin/arm-linux-ar
+	fpic := -fPIC
+	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	PLATFORM_DEFINES += -fomit-frame-pointer -ffast-math -mcpu=arm926ej-s
 	EXTERNAL_ZLIB = 1
 
 # Windows MSVC 2017 all architectures

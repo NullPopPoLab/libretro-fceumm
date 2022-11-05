@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2020 negativeExponent
+ *  Copyright (C) 2020
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,17 +43,18 @@ static void Sync(void) {
 }
 
 static DECLFR(M554Read) {
-    if ((A >= 0xCAB6) && (A < 0xCAD7))
+    int A1 = A &~1;
+    if ((A >= 0xCAB6) && (A <= 0xCAD7))
     {
         reg = (A >> 2) & 0x0F;
         Sync();
     }
-    else if ((A == 0xEBE2) || (A == 0xEE32))
+    else if ((A1 == 0xEBE2) || (A1 == 0xEE32))
     {
         reg = (A >> 2) & 0x0F;
         Sync();
     }
-    else if (A == 0xFFFC)
+    else if (A1 == 0xFFFC)
     {
         reg = (A >> 2) & 0x0F;
         Sync();

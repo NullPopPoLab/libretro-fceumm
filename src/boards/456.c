@@ -1,7 +1,7 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2007 CaH4e3
+ *  Copyright (C) 2022
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,45 +19,40 @@
  */
 
 #include "mapinc.h"
+#include "mmc3.h"
 
-static uint8 reg, mirr;
-static SFORMAT StateRegs[] =
-{
-	{ &reg, 1, "REGS" },
-	{ &mirr, 1, "MIRR" },
-	{ 0 }
-};
-
-static void Sync(void) {
-	setprg8(0x6000, 32);
-	setprg32(0x8000, reg);
-	setchr8(0);
+static void Mapper456_PRGWrap(uint32 A, uint8 V) {
+	setprg8(A, V &0x0F | EXPREGS[0] <<4);
 }
 
-static DECLFW(BMCGS2004Write) {
-	reg = V;
-	Sync();
+static void Mapper456_CHRWrap(uint32 A, uint8 V) {
+	setchr1(A, V &0x7F | EXPREGS[0] <<7);
 }
 
-static void BMCGS2004Power(void) {
-	reg = 0x07;
-	Sync();
-	SetReadHandler(0x6000, 0x7FFF, CartBR);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, BMCGS2004Write);
+static DECLFW(Mapper456_Write) {
+	if (A &0x100) {
+		EXPREGS[0] =V;
+		FixMMC3PRG(MMC3_cmd);
+		FixMMC3CHR(MMC3_cmd);
+	}
 }
 
-static void BMCGS2004Reset(void) {
-	reg = 0x07;
+static void Mapper456_Reset(void) {
+	EXPREGS[0] =0;
+	MMC3RegReset();
 }
 
-static void StateRestore(int version) {
-	Sync();
+static void Mapper456_Power(void) {
+	EXPREGS[0] =0;
+	GenMMC3Power();
+	SetWriteHandler(0x4020, 0x5FFF, Mapper456_Write);
 }
 
-void BMCGS2004_Init(CartInfo *info) {
-	info->Reset = BMCGS2004Reset;
-	info->Power = BMCGS2004Power;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+void Mapper456_Init(CartInfo *info) {
+	GenMMC3_Init(info, 128, 128, 8, 0);
+	cwrap = Mapper456_CHRWrap;
+	pwrap = Mapper456_PRGWrap;
+	info->Power = Mapper456_Power;
+	info->Reset = Mapper456_Reset;
+	AddExState(EXPREGS, 1, 0, "EXPR");
 }
