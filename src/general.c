@@ -66,15 +66,15 @@ char *FCEU_MakeFName(int type, int id1, char *cd1)
    {
       case FCEUMKF_GGROM:
          fill_pathname_join(tmp, BaseDirectory,
-               "nes/gamegenie.nes", sizeof(tmp));
+               "gamegenie.nes", sizeof(tmp));
          break;
       case FCEUMKF_FDSROM:
          fill_pathname_join(tmp, BaseDirectory,
-               "nes/disksys.rom", sizeof(tmp));
+               "disksys.rom", sizeof(tmp));
          break;
       case FCEUMKF_PALETTE:
          fill_pathname_join(tmp, BaseDirectory,
-               "nes/nes.pal", sizeof(tmp));
+               "nes.pal", sizeof(tmp));
          break;
       default:
          break;
