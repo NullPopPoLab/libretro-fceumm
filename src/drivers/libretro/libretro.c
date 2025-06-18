@@ -43,6 +43,8 @@
 #include "libretro-common/include/libretro_gskit_ps2.h"
 #endif
 
+#define CUSTOM_VERSION "+NC41"
+
 #define MAX_PLAYERS 4 /* max supported players */
 #define MAX_PORTS 2   /* max controller ports,
                        * port 0 for player 1/3, port 1 for player 2/4 */
@@ -1637,9 +1639,9 @@ void retro_get_system_info(struct retro_system_info *info)
    info->need_fullpath    = true;
    info->valid_extensions = "fds|nes|unf|unif";
 #ifdef GIT_VERSION
-   info->library_version  = "(SVN)" GIT_VERSION;
+   info->library_version  = "(SVN)" GIT_VERSION CUSTOM_VERSION;
 #else
-   info->library_version  = "(SVN)";
+   info->library_version  = "(SVN)" CUSTOM_VERSION;
 #endif
    info->library_name     = "FCEUmm";
    info->block_extract    = false;
