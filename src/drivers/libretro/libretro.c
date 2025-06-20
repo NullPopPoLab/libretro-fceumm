@@ -358,6 +358,75 @@ void FCEUD_DispMessage(enum retro_log_level level, unsigned duration, const char
    }
 }
 
+static unsigned diskidx=0;
+
+static bool disk_set_eject_state( bool ejected )
+{
+	if(FCEU_Ready())FCEU_FDSInsert(-1);
+	if(!ejected){
+		if(!FCEU_SelectSide(diskidx))return false;
+		FCEU_FDSInsert(-1);
+	}
+
+	return true;
+}
+
+static bool disk_get_eject_state(void)
+{
+	return !FCEU_Ready();
+}
+
+static bool disk_set_image_index(unsigned index)
+{
+	diskidx=index;
+}
+
+unsigned disk_get_image_index(void)
+{
+	return diskidx;
+}
+
+static unsigned disk_get_num_images(void)
+{
+	return FCEU_TotalSides();
+}
+
+static unsigned disk_get_num_drives(void)
+{
+	return 1;
+}
+
+static bool disk_get_image_label(unsigned index, char *label, size_t len)
+{
+	if(index>=FCEU_TotalSides())return false;
+	snprintf(label,len,"Disk %u Side %c",(index>>1)+1,(index&1)?'B':'A');
+	return true;
+}
+
+static int disk_get_drive_image_index(unsigned drive)
+{
+	if(!FCEU_Ready())return -1;
+	return FCEU_CurrentSide();
+}
+
+static struct retro_disk_control_ext2_callback disk_interface =
+{
+	disk_set_eject_state,
+	disk_get_eject_state,
+	disk_get_image_index,
+	disk_set_image_index,
+	disk_get_num_images,
+	0, /* disk_replace_image_index */
+	0, /* add_image_index */
+	0, /* set_initial_image */
+	0, /* get_image_path */
+	disk_get_image_label,
+	disk_get_num_drives,
+	0, /* set_drive_eject_state */
+	0, /* get_drive_eject_state */
+	disk_get_drive_image_index
+};
+
 void FCEUD_SoundToggle (void)
 {
    FCEUI_SetSoundVolume(sndvolume);
@@ -1699,6 +1768,8 @@ void retro_init(void)
    environ_cb(RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION,
          &libretro_msg_interface_version);
 
+   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT2_INTERFACE, &disk_interface);
+
    palette_switch_init();
 }
 
@@ -2681,21 +2752,6 @@ static void FCEUD_UpdateInput(void)
    if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
       FCEU_VSUniCoin();             /* Insert Coin VS System */
 
-   if (GameInfo->type == GIT_FDS)   /* Famicom Disk System */
-   {
-      bool curL = input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L);
-      bool curR = input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R);
-      static bool prevL = false, prevR = false;
-
-      if (curL && !prevL)
-         FCEU_FDSSelect();          /* Swap FDisk side */
-      prevL = curL;
-
-      if (curR && !prevR)
-         FCEU_FDSInsert(-1);        /* Insert or eject the disk */
-      prevR = curR;
-   }
-
    /* Handle internal palette switching */
    if (palette_prev || palette_next)
    {
@@ -3305,8 +3361,6 @@ bool retro_load_game(const struct retro_game_info *info)
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "(VSSystem) Insert Coin" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
@@ -3365,8 +3419,6 @@ bool retro_load_game(const struct retro_game_info *info)
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "Switch Palette (+ Left/Right)" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "(VSSystem) Insert Coin" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
