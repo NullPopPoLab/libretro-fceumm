@@ -65,6 +65,8 @@
 #define RETRO_DEVICE_FC_FTRAINERB RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_KEYBOARD, 3)
 #define RETRO_DEVICE_FC_AUTO      RETRO_DEVICE_JOYPAD
 
+#define RETRO_DEVICE_JOYPAD_DUAL  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
+
 #define NES_WIDTH   256
 #define NES_HEIGHT  240
 #define NES_8_7_PAR  ((width * (8.0 / 7.0)) / height)
@@ -123,6 +125,14 @@ typedef struct
 static const keymap turbomap[] = {
    { RETRO_DEVICE_ID_JOYPAD_X, JOY_A },
    { RETRO_DEVICE_ID_JOYPAD_Y, JOY_B },
+};
+static const keymap turbomap_dual1[] = {
+   { RETRO_DEVICE_ID_JOYPAD_L4, JOY_A },
+   { RETRO_DEVICE_ID_JOYPAD_L5, JOY_B },
+};
+static const keymap turbomap_dual2[] = {
+   { RETRO_DEVICE_ID_JOYPAD_R4, JOY_A },
+   { RETRO_DEVICE_ID_JOYPAD_R5, JOY_B },
 };
 
 static const keymap bindmap[] = {
@@ -227,6 +237,9 @@ extern int show_crosshair;
 extern int option_ramstate;
 extern int zapper_trigger_invert_option;
 extern int zapper_sensor_invert_option;
+
+static void set_input_desc_gamepad();
+static void set_input_desc_dual();
 
 /* emulator-specific callback functions */
 
@@ -1279,6 +1292,14 @@ static void update_nes_controllers(unsigned port, unsigned device)
          FCEUI_SetInput(port, SI_POWERPADB, &nes_input.PowerPadData, 0);
          FCEU_printf(" Player %u: Power Pad\n", port + 1);
          break;
+      case RETRO_DEVICE_JOYPAD_DUAL:
+         nes_input.type[0] = RETRO_DEVICE_JOYPAD_DUAL;
+         FCEUI_SetInput(0, SI_GAMEPAD, &nes_input.JSReturn, 0);
+         FCEU_printf(" Player %u: Gamepad\n", 1);
+         nes_input.type[1] = RETRO_DEVICE_JOYPAD_DUAL;
+         FCEUI_SetInput(1, SI_GAMEPAD, &nes_input.JSReturn, 0);
+         FCEU_printf(" Player %u: Gamepad\n", 2);
+         break;
       case RETRO_DEVICE_GAMEPAD:
       default:
          nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
@@ -1381,10 +1402,15 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
    {
       if (port < 2) /* player 1-2 */
       {
-         if (device != RETRO_DEVICE_AUTO)
+         if (device != RETRO_DEVICE_AUTO) {
             update_nes_controllers(port, device);
-         else
+			if(device==RETRO_DEVICE_JOYPAD_DUAL) set_input_desc_dual();
+			else set_input_desc_gamepad();
+         }
+         else {
             update_nes_controllers(port, nes_to_libretro(GameInfo->input[port]));
+			set_input_desc_gamepad();
+         }
       }
       else
       {
@@ -1633,6 +1659,7 @@ void retro_set_environment(retro_environment_t cb)
       { "Auto",    RETRO_DEVICE_AUTO },
       { "Gamepad", RETRO_DEVICE_GAMEPAD },
       { "Zapper",  RETRO_DEVICE_ZAPPER },
+      { "DualPad", RETRO_DEVICE_JOYPAD_DUAL },
       { 0, 0 },
    };
 
@@ -1673,7 +1700,7 @@ void retro_set_environment(retro_environment_t cb)
    };
 
    static const struct retro_controller_info ports[] = {
-      { pads1, 3 },
+      { pads1, 4 },
       { pads2, 6 },
       { pads3, 4 },
       { pads4, 2 },
@@ -2559,75 +2586,100 @@ static void FCEUD_UpdateInput(void)
       int i              = 0;
       uint8_t input_buf  = 0;
       int player_enabled = (nes_input.type[player] == RETRO_DEVICE_GAMEPAD) ||
+            (nes_input.type[player] == RETRO_DEVICE_JOYPAD_DUAL) ||
             (nes_input.type[player] == RETRO_DEVICE_JOYPAD);
 
       if (player_enabled)
       {
-         int32_t ret;
+         int32_t ret = 0;
+         int player_dev=(nes_input.type[player] == RETRO_DEVICE_JOYPAD_DUAL)?0:player;
+         bool dpad_enabled = true;
 
-         if (libretro_supports_bitmasks)
-         {
-            bool dpad_enabled = true;
+        if (libretro_supports_bitmasks)
+        {
+           ret = input_cb(player_dev, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+        }
+        else{
+           for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_BUTTON_MAX; i++)
+              ret |= input_cb(player_dev, RETRO_DEVICE_JOYPAD, 0, i) ? (1<<i) : 0;
+        }
 
-            ret = input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+        if(nes_input.type[player] != RETRO_DEVICE_JOYPAD_DUAL){
+           /* If palette switching is enabled, check if
+            * player 1 has the L2 button held down */
+           if ((player == 0) &&
+               palette_switch_enabled &&
+               (ret & (1 << RETRO_DEVICE_ID_JOYPAD_G6)))
+           {
+              /* D-Pad left/right are used to switch palettes */
+              palette_prev = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT));
+              palette_next = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT));
 
-            /* If palette switching is enabled, check if
-             * player 1 has the L2 button held down */
-            if ((player == 0) &&
-                palette_switch_enabled &&
-                (ret & (1 << RETRO_DEVICE_ID_JOYPAD_G6)))
-            {
-               /* D-Pad left/right are used to switch palettes */
-               palette_prev = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT));
-               palette_next = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT));
+              /* Regular D-Pad input is disabled */
+              dpad_enabled = false;
+           }
 
-               /* Regular D-Pad input is disabled */
-               dpad_enabled = false;
-            }
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A))
+              input_buf |= JOY_A;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
+              input_buf |= JOY_B;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_C))
+              input_buf |= JOY_A | JOY_B;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+              input_buf |= JOY_SELECT;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+              input_buf |= JOY_START;
 
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A))
-               input_buf |= JOY_A;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
-               input_buf |= JOY_B;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_C))
-               input_buf |= JOY_A | JOY_B;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
-               input_buf |= JOY_SELECT;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
-               input_buf |= JOY_START;
+           if (dpad_enabled)
+           {
+              if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP))
+                 input_buf |= JOY_UP;
+              if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))
+                 input_buf |= JOY_DOWN;
+              if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT))
+                 input_buf |= JOY_LEFT;
+              if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))
+                 input_buf |= JOY_RIGHT;
+           }
+        }
+        else if(player == 0){
 
-            if (dpad_enabled)
-            {
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP))
-                  input_buf |= JOY_UP;
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))
-                  input_buf |= JOY_DOWN;
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT))
-                  input_buf |= JOY_LEFT;
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))
-                  input_buf |= JOY_RIGHT;
-            }
-         }
-         else
-         {
-            for (i = 0; i < MAX_BUTTONS; i++)
-               input_buf |= input_cb(player, RETRO_DEVICE_JOYPAD, 0,
-                     bindmap[i].retro) ? bindmap[i].nes : 0;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L0))
+              input_buf |= JOY_A;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
+              input_buf |= JOY_B;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+              input_buf |= JOY_SELECT;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_G1))
+              input_buf |= JOY_START;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP))
+              input_buf |= JOY_UP;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))
+              input_buf |= JOY_DOWN;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT))
+              input_buf |= JOY_LEFT;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))
+              input_buf |= JOY_RIGHT;
+        }
+        else if(player == 1){
 
-            /* If palette switching is enabled, check if
-             * player 1 has the L2 button held down */
-            if ((player == 0) &&
-                palette_switch_enabled &&
-                input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_G6))
-            {
-               /* D-Pad left/right are used to switch palettes */
-               palette_prev = (bool)(input_buf & JOY_LEFT);
-               palette_next = (bool)(input_buf & JOY_RIGHT);
-
-               /* Regular D-Pad input is disabled */
-               input_buf &= ~(JOY_UP | JOY_DOWN | JOY_LEFT | JOY_RIGHT);
-            }
-         }
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R0))
+              input_buf |= JOY_A;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R))
+              input_buf |= JOY_B;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+              input_buf |= JOY_SELECT;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_G2))
+              input_buf |= JOY_START;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_X))
+              input_buf |= JOY_UP;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
+              input_buf |= JOY_DOWN;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_Y))
+              input_buf |= JOY_LEFT;
+           if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A))
+              input_buf |= JOY_RIGHT;
+        }
 
          /* Turbo A and Turbo B buttons are
           * mapped to Joypad X and Joypad Y
@@ -2654,7 +2706,19 @@ static void FCEUD_UpdateInput(void)
             /* Handle Turbo A, B & A+B buttons */
             for (i = 0; i < TURBO_BUTTONS; i++)
             {
-               if (input_cb(player, RETRO_DEVICE_JOYPAD, 0, turbomap[i].retro) || input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z))
+               bool f=false;
+               if(nes_input.type[player] != RETRO_DEVICE_JOYPAD_DUAL){
+                  if(input_cb(player, RETRO_DEVICE_JOYPAD, 0, turbomap[i].retro) ||
+                     input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z))f=true;
+               }
+               else if(player==0){
+                  if(input_cb(player, RETRO_DEVICE_JOYPAD, 0, turbomap_dual1[i].retro))f=true;
+               }
+               else if(player==1){
+                  if(input_cb(player, RETRO_DEVICE_JOYPAD, 0, turbomap_dual2[i].retro))f=true;
+               }
+
+               if (f)
                {
                   if (!turbo_button_toggle[player][i])
                      input_buf |= turbomap[i].nes;
@@ -3342,72 +3406,9 @@ static const struct cartridge_db famicom_4p_db_list[] =
    }
 };
 
-bool retro_load_game(const struct retro_game_info *info)
+void set_input_desc_gamepad()
 {
-   unsigned i, j;
-   const char *system_dir = NULL;
-   size_t fourscore_len = sizeof(fourscore_db_list)   / sizeof(fourscore_db_list[0]);
-   size_t famicom_4p_len = sizeof(famicom_4p_db_list) / sizeof(famicom_4p_db_list[0]);
-   enum retro_pixel_format rgb565;
-
    struct retro_input_descriptor desc[] = {
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_C,      "A+B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "(VSSystem) Insert Coin" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z,      "Turbo A+B" },
-
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_C,      "A+B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z,      "Turbo A+B" },
-
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_C,      "A+B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z,      "Turbo A+B" },
-
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_C,      "A+B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z,      "Turbo A+B" },
-
-      { 0 },
-   };
-
-   struct retro_input_descriptor desc_ps[] = { /* ps: palette switching */
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
@@ -3464,6 +3465,51 @@ bool retro_load_game(const struct retro_game_info *info)
 
       { 0 },
    };
+
+	environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
+}
+
+void set_input_desc_dual()
+{
+   struct retro_input_descriptor desc[] = {
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "P1 D-Pad Left" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "P1 D-Pad Up" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "P1 D-Pad Down" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "P1 D-Pad Right" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L0,     "P1 A" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "P1 B" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "P1 Select" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_G1,     "P1 Start" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L4,     "P1 Turbo A" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L5,     "P1 Turbo B" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "P1 (VSSystem) Insert Coin" },
+
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "P2 D-Pad Left" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "P2 D-Pad Up" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "P2 D-Pad Down" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "P2 D-Pad Right" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R0,     "P2 A" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "P2 B" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "P2 Select" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_G2,     "P2 Start" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R4,     "P2 Turbo A" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R5,     "P2 Turbo B" },
+
+      { 0 },
+   };
+
+	environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
+}
+
+bool retro_load_game(const struct retro_game_info *info)
+{
+   unsigned i, j;
+   const char *system_dir = NULL;
+   size_t fourscore_len = sizeof(fourscore_db_list)   / sizeof(fourscore_db_list[0]);
+   size_t famicom_4p_len = sizeof(famicom_4p_db_list) / sizeof(famicom_4p_db_list[0]);
+   enum retro_pixel_format rgb565;
+
+	set_input_desc_gamepad();
 
    size_t desc_base = 64;
    struct retro_memory_descriptor descs[64 + 4];
@@ -3566,11 +3612,6 @@ bool retro_load_game(const struct retro_game_info *info)
 #endif
       return false;
    }
-
-   if (palette_switch_enabled)
-      environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc_ps);
-   else
-      environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
    for (i = 0; i < MAX_PORTS; i++) {
       FCEUI_SetInput(i, SI_GAMEPAD, &nes_input.JSReturn, 0);
